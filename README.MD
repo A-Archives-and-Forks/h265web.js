@@ -180,6 +180,36 @@ If [h265web.js](https://github.com/numberwolf/h265web.js) helps your project, gi
 
 <br>
 
+# Documentation
+
+- English Docs Home: https://h265web.com/markdown-docs/get-started.php
+- Getting Started: https://h265web.com/markdown-docs/get-started.php
+- Simple Demo: https://h265web.com/markdown-docs/simple-demo.php
+- API Documentation: https://h265web.com/markdown-docs/api-docs.php
+- Donate: https://h265web.com/markdown-docs/donate.php
+
+### Partner Projects
+
+* [ZLMediaKit - a powerful streaming media service](https://github.com/ZLMediaKit/ZLMediaKit)
+
+* [FFmpeg with H.265 HTTP-FLV live-stream support](https://github.com/numberwolf/FFmpeg-QuQi-H265-FLV-RTMP)
+
+* [Web H.265 decoder](https://github.com/numberwolf/h265web.js-wasm-decoder)
+
+* [YuvEye - image-quality and YUV analysis tool](https://www.zzsin.com/YUVEye.html)
+
+### About
+
+* [Technical community, questions and support group](https://github.com/numberwolf/h265web.js/wiki/%E3%80%90%E6%8A%80%E6%9C%AF%E7%A4%BE%E5%8C%BA%E3%80%91%E6%8F%90%E9%97%AE-%E4%BA%A4%E6%B5%81-%E2%80%94-%E8%81%94%E7%B3%BB%E6%88%91-%E6%8A%80%E6%9C%AF%E6%94%AF%E6%8C%81%E7%BE%A4)
+
+* [Player update history](https://github.com/numberwolf/h265web.js/wiki/%E3%80%90%E6%97%A5%E5%BF%97%E3%80%91%E6%92%AD%E6%94%BE%E5%99%A8%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95)
+
+* [Why direct messages are not recommended](https://github.com/numberwolf/h265web.js/wiki/%E3%80%90%E4%BD%9C%E8%80%85%E8%AF%B4%E3%80%91%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E5%BB%BA%E8%AE%AE%E7%A7%81%E8%81%8A)
+
+* [About the founder](https://github.com/numberwolf/h265web.js/wiki/%E3%80%90%E4%BD%9C%E8%80%85%E8%AF%B4%E3%80%91%E5%85%B3%E4%BA%8E%E5%88%9B%E5%A7%8B%E4%BA%BA)
+
+<hr>
+
 # Donate #
 
 |  Wechat | Alipay | PayPal |
@@ -240,6 +270,11 @@ ffmpeg -ss 20 -t 10 -i ./res/xinxiaomen.mp4 \
 
 | Update | Content |
 | ---- | ---- |
+| Time | 2026/08/03 |
+| - | 0.Optimized Auto core selection to prefer native/MSE, then WebCodec, then WASM/SIMD, with controlled fallback |
+| - | 1.Improved H.264/H.265 playback with AAC, PCM, G.711A and G.711U audio; unsupported audio no longer downgrades a playable video core |
+| - | 2.Fixed repeated backward jumps and frame skipping in HEVC B-frame HTTP-TS and WebSocket-TS live streams by normalizing only the detected abnormal live-TS DTS cadence while preserving CTS reorder information |
+| - | 3.Improved player lifecycle cleanup, error fallback and multi-instance stability |
 | Time | 2026/03/28 |
 | - | 0.Update more powerful version |
 | Time | 2022/11/06 |
