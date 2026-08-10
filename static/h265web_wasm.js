@@ -7738,7 +7738,7 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  420908: () => {
+  414036: () => {
     if (typeof window != "undefined") {
       console.log("logRequest_downloadSucceeded OK");
       window.dispatchEvent(new CustomEvent("wasmTextDownloadSuccessed"));
@@ -7746,17 +7746,17 @@ var ASM_CONSTS = {
       console.log("logRequest_downloadSucceeded failed");
     }
   },
-  421123: () => {
+  414251: () => {
     self.postMessage({
       type: "restart-load-media"
     });
   },
-  421177: () => {
+  414305: () => {
     self.postMessage({
       type: "release_done"
     });
   },
-  421225: $0 => {
+  414353: $0 => {
     const canvasId = Module.UTF8ToString($0);
     Module.webcodec_seek_target_pts = -1;
     if (!Module.frameQueueLastQueuedPtsMap) {
@@ -7816,12 +7816,12 @@ var ASM_CONSTS = {
       console.log("Released WebGL context");
     }
   },
-  422834: () => {
+  415962: () => {
     self.postMessage({
       type: "release_done"
     });
   },
-  422882: $0 => {
+  416010: $0 => {
     const canvasId = Module.UTF8ToString($0);
     Module.webcodec_seek_target_pts = -1;
     if (!Module.frameQueueLastQueuedPtsMap) {
@@ -7870,7 +7870,7 @@ var ASM_CONSTS = {
     }
     console.warn("wcodec ctx root: clean_tex_queue queue data", Module.frameQueueMap[canvasId]);
   },
-  424282: $0 => {
+  417410: $0 => {
     const canvasId = Module.UTF8ToString($0);
     if (!Module.frameQueueMap || !Module.frameQueueMap[canvasId] || Module.frameQueueMap[canvasId].length === 0) {
       return -1;
@@ -7881,7 +7881,7 @@ var ASM_CONSTS = {
     }
     return -1;
   },
-  424581: $0 => {
+  417709: $0 => {
     const canvasId = Module.UTF8ToString($0);
     if (!Module.frameQueueMap || !Module.frameQueueMap[canvasId] || Module.frameQueueMap[canvasId].length === 0) {
       return 0;
@@ -7893,32 +7893,13 @@ var ASM_CONSTS = {
     }
     return Module.frameQueueMap[canvasId].length;
   },
-  424944: () => {
+  418072: () => {
     const gl = Module.gl;
     if (!gl) return -1;
-    const info = gl.getExtension("WEBGL_debug_renderer_info");
-    if (info) {
-      const vendor = gl.getParameter(info.UNMASKED_VENDOR_WEBGL);
-      const renderer = gl.getParameter(info.UNMASKED_RENDERER_WEBGL);
-      console.log(`GPU: ${vendor} ${renderer}`);
-    }
-    let count = 0;
-    const width = 1920;
-    const height = 1080;
-    while (true) {
-      try {
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-        count++;
-        console.log(`Created texture ${count}`);
-      } catch (e) {
-        break;
-      }
-    }
-    return count;
+    const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    return Number.isFinite(maxTextureSize) ? maxTextureSize : 0;
   },
-  425567: $0 => {
+  418240: $0 => {
     Module.gl = null;
     Module.shaderProgram = null;
     Module.gopChunk = [];
@@ -8188,14 +8169,14 @@ var ASM_CONSTS = {
     initFrameQueue(c_id);
     initDecoderCall(c_id);
   },
-  436730: $0 => {
+  429403: $0 => {
     const c_id = Module.UTF8ToString($0);
     if (!Module.frameQueueMap || !Module.frameQueueMap[c_id]) {
       return 0;
     }
     return Module.frameQueueMap[c_id].length;
   },
-  436886: $0 => {
+  429559: $0 => {
     if (Module.webcodec_seek_target_pts >= 0) {
       return -1;
     }
@@ -8227,8 +8208,8 @@ var ASM_CONSTS = {
     });
     return 1;
   },
-  437875: () => Module.decoder_conf && Module.decoder_conf.description ? 1 : 0,
-  437950: ($0, $1, $2, $3, $4, $5) => {
+  430548: () => Module.decoder_conf && Module.decoder_conf.description ? 1 : 0,
+  430623: ($0, $1, $2, $3, $4, $5) => {
     const canvasId = Module.UTF8ToString($4);
     const data = new Uint8Array(Module.HEAPU8.subarray($0, $0 + $1));
     if ($3 > 0) {
@@ -8476,6 +8457,8 @@ var _push_buffer = Module["_push_buffer"] = createExportWrapper("push_buffer", 4
 var _push_probe = Module["_push_probe"] = createExportWrapper("push_probe", 2);
 
 var _fetch_done_buffer = Module["_fetch_done_buffer"] = createExportWrapper("fetch_done_buffer", 1);
+
+var _ffdemuxer_set_defer_probe_until_fetch_done = Module["_ffdemuxer_set_defer_probe_until_fetch_done"] = createExportWrapper("ffdemuxer_set_defer_probe_until_fetch_done", 2);
 
 var _demuxer_video_pkt = Module["_demuxer_video_pkt"] = createExportWrapper("demuxer_video_pkt", 3);
 
@@ -8727,7 +8710,7 @@ var _asyncify_start_rewind = createExportWrapper("asyncify_start_rewind", 1);
 
 var _asyncify_stop_rewind = createExportWrapper("asyncify_stop_rewind", 0);
 
-var _ff_h264_cabac_tables = Module["_ff_h264_cabac_tables"] = 199864;
+var _ff_h264_cabac_tables = Module["_ff_h264_cabac_tables"] = 192984;
 
 function invoke_iii(index, a1, a2) {
   var sp = stackSave();

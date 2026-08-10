@@ -198,7 +198,20 @@ ylplayer.video_sei_text_callback = function (text, pts, dts, codec) {
 | `readframe_multi_times` | `number` | No | Demux read scale |
 | `ignore_audio` | `boolean` | No | Ignore audio track |
 | `core` | `string` | No | Explicit core: `mse_hevc`, `wasm_hevc`, `webcodec_hevc` |
+| `hls_strategy` | `string` | No | HLS route policy: `auto` (default), `mainline`, or `legacy` |
 | `media_uri` | `string` | No | Optional media URL, but public usage still recommends `build()` then `load_media()` |
+
+### HLS route policy
+
+| Configuration | Result |
+|---|---|
+| Omitted | Uses `auto`; tries compatible mainline candidates only and never loads `past-core/ext*` |
+| `hls_strategy: 'auto'` | Selects a compatible mainline route from browser capabilities, the requested `core`, and bound callbacks; never loads `past-core/ext*` |
+| `hls_strategy: 'mainline'` | Uses mainline candidates only; never loads `past-core/ext*` |
+| `hls_legacy_fallback: true` only | No effect. This deprecated option no longer enables an automatic legacy fallback |
+| `hls_strategy: 'legacy'` | Directly uses the historical `past-core/ext*` HLS core; no mainline candidate is attempted |
+
+Use `legacy` only when you intentionally need the historical core. `ext_src_js_uri` and `ext_wasm_js_uri` are only used by that explicit legacy route. If all mainline candidates fail under `auto` or `mainline`, the player reports an HLS route error instead of silently switching to `ext*`.
 
 ### Recommended public usage
 

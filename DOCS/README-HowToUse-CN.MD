@@ -198,7 +198,20 @@ ylplayer.video_sei_text_callback = function (text, pts, dts, codec) {
 | `readframe_multi_times` | `number` | 否 | demux 读取倍率 |
 | `ignore_audio` | `boolean` | 否 | 是否忽略音频 |
 | `core` | `string` | 否 | 显式指定内核：`mse_hevc`、`wasm_hevc`、`webcodec_hevc` |
+| `hls_strategy` | `string` | 否 | HLS 路由策略：`auto`（默认）、`mainline` 或 `legacy` |
 | `media_uri` | `string` | 否 | 可选媒体地址，但公开接入仍推荐 `build()` 后再 `load_media()` |
+
+### HLS 路由策略
+
+| 配置 | 实际行为 |
+|---|---|
+| 不设置 | 使用 `auto`；只尝试兼容的主线候选，不会加载 `past-core/ext*` |
+| `hls_strategy: 'auto'` | 根据浏览器能力、指定的 `core` 和已绑定回调选择兼容的主线路由；不会加载 `past-core/ext*` |
+| `hls_strategy: 'mainline'` | 只使用主线候选；不会加载 `past-core/ext*` |
+| 仅设置 `hls_legacy_fallback: true` | 无效。该旧参数已废弃，不能再开启自动 legacy 兜底 |
+| `hls_strategy: 'legacy'` | 直接使用历史 `past-core/ext*` HLS 内核；不会尝试主线候选 |
+
+只有明确需要历史内核时才使用 `legacy`。`ext_src_js_uri` 和 `ext_wasm_js_uri` 只会被这条显式 legacy 路由使用。`auto` 或 `mainline` 的全部主线候选失败后，播放器会报告 HLS 路由错误，不会静默切换到 `ext*`。
 
 ### 推荐公开接入方式
 
