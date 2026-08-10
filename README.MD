@@ -270,6 +270,13 @@ ffmpeg -ss 20 -t 10 -i ./res/xinxiaomen.mp4 \
 
 | Update | Content |
 | ---- | ---- |
+| Time | 2026/08/10 |
+| - | 0.Added callback-aware HLS mainline routing across Native HLS, MSE, WebCodec and WASM; `auto`/`mainline` never enter `past-core/ext*`, while `legacy` must be selected explicitly |
+| - | 1.Aligned callback contracts across HLS, MP4, FLV and MPEG-TS, including SEI, NAL/frame/render, cache, seek, lifecycle, GPU and A/V-sync callbacks |
+| - | 2.Improved HLS master/media playlists, redirects, live sliding windows, discontinuities, codec detection, HEVC samples, keyframes and timestamp handling |
+| - | 3.Strengthened seek completion, release/rebuild, worker cleanup, bounded release timeout and multi-instance isolation |
+| - | 4.Clarified audio controls: `ignore_audio` skips the audio pipeline and is not mute; `set_voice(0)` can be restored with a positive volume |
+| - | 5.Updated English/Chinese integration documentation and expanded automated and browser regression coverage |
 | Time | 2026/08/03 |
 | - | 0.Optimized Auto core selection to prefer native/MSE, then WebCodec, then WASM/SIMD, with controlled fallback |
 | - | 1.Improved H.264/H.265 playback with AAC, PCM, G.711A and G.711U audio; unsupported audio no longer downgrades a playable video core |

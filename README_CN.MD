@@ -229,6 +229,13 @@
 
 | 更新 | 内容 |
 | ---- | ---- |
+| 时间 | 2026/08/10 |
+| - | 0.新增回调感知的 HLS 主线路由，覆盖 Native HLS、MSE、WebCodec 和 WASM；`auto`/`mainline` 不会进入 `past-core/ext*`，只有显式设置 `legacy` 才使用历史内核 |
+| - | 1.对齐 HLS、MP4、FLV、MPEG-TS 的回调契约，覆盖 SEI、NAL/帧/渲染、缓存、Seek、生命周期、GPU 和 A/V 同步回调 |
+| - | 2.完善 HLS 主/媒体播放列表、重定向、直播滑动窗口、Discontinuity、编码探测、HEVC Sample、关键帧和时间戳处理 |
+| - | 3.增强 Seek 完成语义、Release/Rebuild、Worker 清理、有界释放超时和多实例隔离 |
+| - | 4.明确音频控制语义：`ignore_audio` 表示跳过音频链路而不是静音；`set_voice(0)` 后可通过设置正音量恢复声音 |
+| - | 5.更新中英文接入文档，并扩充自动化测试与浏览器回归覆盖 |
 | 时间 | 2026/08/03 |
 | - | 0.优化 Auto 选核顺序：原生/MSE > WebCodec > WASM/SIMD，并提供受控回退 |
 | - | 1.完善 H.264/H.265 搭配 AAC、PCM、G.711A、G.711U 的播放兼容；音频不支持时不再降低可播放的视频核心 |
