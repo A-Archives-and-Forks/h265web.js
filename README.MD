@@ -20,7 +20,7 @@
 
 > **Built and refined continuously since 2017, h265web.js PRO delivers mature browser playback with broad feature coverage and strong performance.**
 >
-> It covers HEVC/H.265, AVC/H.264, AV1, live streaming, VOD, WebCodec, WASM decoding, MediaInfo, snapshot, fullscreen, seek and multi-instance playback.
+> It covers HEVC/H.265, AVC/H.264, AV1, WebRTC, live streaming, VOD, WebCodec, WASM decoding, MediaInfo, snapshot, fullscreen, seek and multi-instance playback.
 >
 > **Recommended media server:** [ZLMediaKit](https://github.com/ZLMediaKit/ZLMediaKit) - a strong streaming server/framework for live and VOD delivery.
 
@@ -46,6 +46,8 @@ If [h265web.js](https://github.com/numberwolf/h265web.js) helps your project, gi
 ## Demo Entry
 
 - Public Demo: https://h265web.com/player.php
+- WebRTC WHIP Publish Demo: [webrtc-publish.html](./webrtc-publish.html)
+- WebRTC WHEP Playback Demo: [webrtc-play.html](./webrtc-play.html)
 - Docs (Website: How to use): https://h265web.com/markdown-docs/get-started.php
 - Docs (Local: How to use): [README-HowToUse.MD](./DOCS/README-HowToUse.MD)
 
@@ -53,7 +55,7 @@ If [h265web.js](https://github.com/numberwolf/h265web.js) helps your project, gi
 
 - Browser playback of HEVC/H.265, AVC/H.264 and AV1
 - VOD and live playback in one SDK
-- Protocol validation for MP4 / MOV / MKV / FLV / MPEG-TS / M3U8 / HLS / HTTP-FLV / WS-FLV / HTTP-TS / WS-TS / HEVC ES
+- Protocol validation for MP4 / MOV / MKV / FLV / MPEG-TS / M3U8 / HLS / HTTP-FLV / WS-FLV / HTTP-TS / WS-TS / WebRTC / HEVC ES
 - Browser-side player projects that need seek, playbackRate, fullscreen, snapshot, MediaInfo, multi-instance playback and multi-thread decode
 
 ### Integration Cases (Partial)
@@ -86,6 +88,9 @@ If [h265web.js](https://github.com/numberwolf/h265web.js) helps your project, gi
 | <br> | <br> | <br> | <br> |
 | <img src="resource/icon-mediainfo.png" width="100"> | <img src="resource/icon-hevc-s.png" width="100"> | <img src="resource/icon-avc-s.png" width="100"> | <img src="resource/icon-hdecode.png" width="100"> |
 | MediaInfo | HEVC/H.265 | AVC/H.264 | Hardware decoder<br>(FLV/HTTP-FLV/MP4) |
+| <br> | <br> | <br> | <br> |
+| <img src="resource/webrtc.png" width="100"> | <br> | <br> | <br> |
+| WebRTC(LIVE) | <br> | <br> | <br> |
 
 | h265web.js | mpeg.js `(ts demuxer)` | h265web.js's H.265 decoder | LICENSE |
 | ---- | ---- | ---- | ---- |
@@ -118,6 +123,9 @@ If [h265web.js](https://github.com/numberwolf/h265web.js) helps your project, gi
 | websocket-hevc | Live |  Y  | ---- |
 | websocket-flv | Live |  Y  | ---- |
 | websocket-ts | Live |  Y  | ---- |
+| WebRTC / WHEP | Live | Y | Standard HTTP signaling endpoint; recommended for playback |
+| webrtc:// | Live | Y | SDK-compatible URL converted to WHEP signaling |
+| ZLM WebRTC API | Live | Y | ZLMediaKit private signaling endpoint |
 | HEVC/H.265 | Video on demand |  Y  | ---- |
 | HEVC/H.265 | Live |  Y  | ---- |
 | AVC/H.264 | Video on demand |  Y  | ---- |
@@ -143,6 +151,9 @@ If [h265web.js](https://github.com/numberwolf/h265web.js) helps your project, gi
 | WebCodec | Y | Browser-supported hardware path |
 | SIMD | Y | WASM + SIMD acceleration path |
 | MSE | Y | Browser MSE playback path |
+| Native WebRTC | Y | WHEP, `webrtc://` compatibility URL and ZLM private signaling |
+| WebRTC Auto Routing | Y | URL recognition in the SDK; `core: 'webrtc'` can force the route |
+| WebRTC Partial A/V | Y | Supports AV, video-only and audio-only negotiated results |
 | Video on demand | Y |  ----  |
 | Live | Y |  ----  |
 | Seek | Y | ----  |
@@ -179,6 +190,80 @@ If [h265web.js](https://github.com/numberwolf/h265web.js) helps your project, gi
 | Get SEI Data | Y | ---- |
 
 <br>
+
+## WebRTC Publish and Playback
+
+WHIP is the standard WebRTC HTTP ingestion protocol, and WHEP is the standard WebRTC HTTP egress protocol. h265web.js is a player, so WHEP is the recommended playback input. The HTTP(S) endpoint carries SDP signaling; negotiated media still uses WebRTC ICE/DTLS/SRTP.
+
+- Browser WHIP publish demo: [webrtc-publish.html](./webrtc-publish.html)
+- h265web.js WHEP playback demo: [webrtc-play.html](./webrtc-play.html)
+
+For ZLMediaKit RTMP-to-WebRTC conversion, set the timestamp policy before testing:
+
+```ini
+[protocol]
+modify_stamp=1
+paced_sender_ms=0
+```
+
+`modify_stamp=1` uses the ZLMediaKit receive clock with smoothing. With `modify_stamp=2`, some H.264 + AAC RTMP inputs can continue decoding at the expected frame rate while Chrome drops late frames during native WebRTC playout.
+
+The following command publishes the tested H.264 + AAC source to ZLMediaKit. ZLMediaKit then exposes it through WHEP:
+
+```bash
+ffmpeg -hide_banner -stream_loop -1 -re \
+  -i /path/to/input.flv \
+  -vf scale=640:360,format=yuv420p \
+  -c:v libx264 -preset veryfast -tune zerolatency \
+  -profile:v baseline -level 3.1 -bf 0 \
+  -g 25 -keyint_min 25 -sc_threshold 0 \
+  -c:a aac -profile:a aac_low -ar 44100 -ac 2 -b:a 128k \
+  -f flv rtmp://127.0.0.1/live/test
+```
+
+Supported playback inputs for that stream:
+
+```text
+http://127.0.0.1/index/api/whep?app=live&stream=test
+webrtc://127.0.0.1/live/test
+http://127.0.0.1/index/api/webrtc?app=live&stream=test&type=play
+```
+
+The first URL is standard WHEP and is recommended. `webrtc://` is an SDK compatibility URL converted to WHEP. The third URL is specific to ZLMediaKit.
+
+```js
+const player = H265webjsPlayer();
+
+player.on_ready_show_done_callback = function () {
+  console.log('WebRTC first frame ready');
+};
+
+player.on_play_time = function (seconds) {
+  console.log('WebRTC play time', seconds);
+};
+
+player.on_error_callback = function (error) {
+  console.error('WebRTC playback error', error);
+};
+
+player.build({
+  player_id: 'canvas111',
+  base_url: './static/',
+  wasm_js_uri: 'h265web_wasm.js',
+  wasm_wasm_uri: 'h265web_wasm.wasm',
+  ext_src_js_uri: 'extjs.js',
+  ext_wasm_js_uri: 'extwasm.js',
+  width: 640,
+  height: 360,
+  auto_play: false,
+  ignore_audio: false,
+  core: 'webrtc'
+});
+
+player.load_media('http://127.0.0.1/index/api/whep?app=live&stream=test');
+```
+
+Omit `core` to let the SDK recognize the three WebRTC URL forms automatically. WebRTC uses the existing player lifecycle and callback names; no separate public API is required. Native WebRTC live playback stays at 1x and does not support seek. Standard WebRTC can only receive codecs negotiated by the browser. WebCodecs/WASM fallback for a non-negotiated codec requires the server to implement the optional `h265web-rtc-encoded/v1` encoded-media transport.
 
 # Documentation
 
@@ -270,6 +355,12 @@ ffmpeg -ss 20 -t 10 -i ./res/xinxiaomen.mp4 \
 
 | Update | Content |
 | ---- | ---- |
+| Time | 2026/08/25 |
+| - | 0.Added native WebRTC live playback with standard WHEP signaling, `webrtc://` compatibility URLs and the ZLMediaKit private WebRTC API |
+| - | 1.Added automatic WebRTC URL routing and explicit `core: 'webrtc'` selection without changing the existing `build()` and `load_media()` API |
+| - | 2.Added AV, video-only and audio-only negotiated playback, existing lifecycle/error callbacks, release/rebuild and multi-instance isolation |
+| - | 3.Added WHIP publish and WHEP playback demos, plus real Chrome regression coverage for WHEP, MP4, HTTP-FLV and HTTP-TS |
+| - | 4.Documented the ZLMediaKit `modify_stamp=1` requirement for stable RTMP-to-WebRTC A/V timestamps |
 | Time | 2026/08/10 |
 | - | 0.Added callback-aware HLS mainline routing across Native HLS, MSE, WebCodec and WASM; `auto`/`mainline` never enter `past-core/ext*`, while `legacy` must be selected explicitly |
 | - | 1.Aligned callback contracts across HLS, MP4, FLV and MPEG-TS, including SEI, NAL/frame/render, cache, seek, lifecycle, GPU and A/V-sync callbacks |

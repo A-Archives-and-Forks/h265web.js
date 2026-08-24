@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebRTC WHIP Publish Demo</title>
+    <style>
+        body { max-width: 920px; margin: 32px auto; padding: 0 20px; font: 16px/1.5 system-ui, sans-serif; color: #18212f; }
+        video { width: 100%; max-width: 720px; background: #111; border-radius: 12px; }
+        input { width: min(680px, 100%); padding: 10px; }
+        button { margin: 12px 8px 12px 0; padding: 10px 18px; }
+        #status { white-space: pre-wrap; font-family: ui-monospace, monospace; }
+    </style>
+</head>
+<body>
+    <h1>WebRTC WHIP Publish Demo</h1>
+    <p>Publish the local camera and microphone to a WHIP endpoint. Use HTTPS or localhost so the browser can request media permission.</p>
+    <p><input id="whip-url" value="http://127.0.0.1/index/api/whip?app=live&amp;stream=test" aria-label="WHIP URL" /></p>
+    <p>
+        <select id="source-mode" aria-label="Media source">
+            <option value="camera">Camera + microphone</option>
+            <option value="test">Generated test video</option>
+        </select>
+    </p>
+    <button id="start" type="button">Start Publish</button>
+    <button id="stop" type="button">Stop</button>
+    <p><video id="preview" autoplay muted playsinline></video></p>
+    <div id="status">Idle</div>
+    <p><a href="./webrtc-play.html">Open the WHEP playback demo</a></p>
+
+    <script>
+        let peer = null;
+        let localStream = null;
+        let cleanupUrl = null;
+        let testFrameRequest = null;
+
+        const endpoint = document.getElementById('whip-url');
+        const preview = document.getElementById('preview');
+        const status = document.getElementById('status');
+
+        function setStatus(message) {
+            status.textContent = message;
+        }
+
+        function waitForIceComplete(pc, timeoutMs = 3000) {
+            if (pc.iceGatheringState === 'complete') {
+                return Promise.resolve();
+            }
+            return new Promise((resolve) => {
+                let completed = false;
+                const finish = () => {
+                    if (completed) {
+                        return;
+                    }
+                    completed = true;
+                    clearTimeout(timer);
+                    pc.removeEventListener('icegatheringstatechange', onState);
+                    resolve();
+                };
+                const onState = () => {
+                    if (pc.iceGatheringState === 'complete') {
+                        finish();
+                    }
+                };
+                const timer = setTimeout(finish, timeoutMs);
+                pc.addEventListener('icegatheringstatechange', onState);
+            });
+        }
+
+        function createTestStream() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 360;
+            const context = canvas.getContext('2d');
+            const startedAt = performance.now();
+            const draw = (now) => {
+                const elapsed = (now - startedAt) / 1000;
+                context.fillStyle = '#101827';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.fillStyle = '#38bdf8';
+                context.fillRect((elapsed * 120) % canvas.width, 120, 80, 80);
+                context.fillStyle = '#ffffff';
+                context.font = '28px system-ui';
+                context.fillText(`WHIP ${elapsed.toFixed(2)} s`, 24, 48);
+                testFrameRequest = requestAnimationFrame(draw);
+            };
+            testFrameRequest = requestAnimationFrame(draw);
+            return canvas.captureStream(25);
+        }
+
+        async function stopPublish() {
+            const closeUrl = cleanupUrl;
+            cleanupUrl = null;
+            if (peer) {
+                peer.close();
+                peer = null;
+            }
+            if (localStream) {
+                localStream.getTracks().forEach((track) => track.stop());
+                localStream = null;
+            }
+            if (testFrameRequest !== null) {
+                cancelAnimationFrame(testFrameRequest);
+                testFrameRequest = null;
+            }
+            preview.srcObject = null;
+            if (closeUrl) {
+                try {
+                    await fetch(closeUrl, { method: 'DELETE' });
+                } catch (error) {
+                    setStatus(`Stopped locally; WHIP cleanup failed: ${error.message}`);
+                    return;
+                }
+            }
+            setStatus('Stopped');
+        }
+
+        async function startPublish() {
+            await stopPublish();
+            const url = endpoint.value.trim();
+            if (!url) {
+                setStatus('WHIP URL is required');
+                return;
+            }
+            try {
+                localStream = document.getElementById('source-mode').value === 'test'
+                    ? createTestStream()
+                    : await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                preview.srcObject = localStream;
+                peer = new RTCPeerConnection();
+                localStream.getTracks().forEach((track) => peer.addTrack(track, localStream));
+                const offer = await peer.createOffer();
+                await peer.setLocalDescription(offer);
+                await waitForIceComplete(peer);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/sdp',
+                        'Accept': 'application/sdp'
+                    },
+                    body: peer.localDescription.sdp
+                });
+                if (!response.ok) {
+                    throw new Error((await response.text()) || `WHIP HTTP ${response.status}`);
+                }
+                const answer = await response.text();
+                const location = response.headers.get('Location');
+                cleanupUrl = location ? new URL(location, url).toString() : null;
+                await peer.setRemoteDescription({ type: 'answer', sdp: answer });
+                setStatus(`Publishing\n${url}`);
+            } catch (error) {
+                await stopPublish();
+                setStatus(`Publish failed: ${error.message}`);
+            }
+        }
+
+        document.getElementById('start').addEventListener('click', startPublish);
+        document.getElementById('stop').addEventListener('click', stopPublish);
+        window.addEventListener('beforeunload', () => {
+            if (cleanupUrl) {
+                fetch(cleanupUrl, { method: 'DELETE', keepalive: true }).catch(() => {});
+            }
+            if (peer) {
+                peer.close();
+            }
+            if (localStream) {
+                localStream.getTracks().forEach((track) => track.stop());
+            }
+            if (testFrameRequest !== null) {
+                cancelAnimationFrame(testFrameRequest);
+            }
+        });
+    </script>
+</body>
+</html>

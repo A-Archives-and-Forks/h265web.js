@@ -8,6 +8,9 @@ const locale = document.documentElement.lang.toLowerCase().startsWith('zh') ? 'z
 const TEXT = {
     en: {
         presetHevcMp4: 'HEVC MP4 Demo',
+        presetWebRtcWhep: 'WebRTC WHEP (recommended)',
+        presetWebRtcAlias: 'WebRTC compatible URL',
+        presetWebRtcZlm: 'WebRTC ZLM API',
         featureTags: 'Feature Tags',
         yes: 'Yes',
         no: 'No',
@@ -60,6 +63,9 @@ const TEXT = {
     },
     zh: {
         presetHevcMp4: 'HEVC MP4 演示',
+        presetWebRtcWhep: 'WebRTC WHEP（推荐）',
+        presetWebRtcAlias: 'WebRTC 兼容地址',
+        presetWebRtcZlm: 'WebRTC ZLM 私有接口',
         featureTags: '能力标签',
         yes: '支持',
         no: '不支持',
@@ -115,6 +121,9 @@ const TEXT = {
 const DEFAULT_MEDIA_URL = './resource/hevc_test_moov_set_head_16s.mp4';
 const MEDIA_PRESETS = [
     { label: TEXT.presetHevcMp4, url: DEFAULT_MEDIA_URL },
+    { label: TEXT.presetWebRtcWhep, url: 'http://127.0.0.1/index/api/whep?app=live&stream=test' },
+    { label: TEXT.presetWebRtcAlias, url: 'webrtc://127.0.0.1/live/test' },
+    { label: TEXT.presetWebRtcZlm, url: 'http://127.0.0.1/index/api/webrtc?app=live&stream=test&type=play' },
 ];
 
 const FEATURE_COLUMNS = [
@@ -122,7 +131,7 @@ const FEATURE_COLUMNS = [
     'SuperGpuCache', 'SuperCpuCache', 'PlayBack H265', 'PlayBack H264', 'PlayBack AV1',
     'FLV', 'MP4', 'RawData H265', 'HTTP-FLV', 'HTTP-TS', 'Websocket FLV', 'Websocket TS',
     'Websocket H265', 'MPEG-TS', 'M3U8', 'HLS', 'MKV', 'G711A alaw', 'G711U ulaw', 'AAC',
-    'MP3', 'Capture Frame', 'Auto Play', 'Next Frame', 'MediaInfo(Probe)'
+    'MP3', 'Capture Frame', 'Auto Play', 'Next Frame', 'MediaInfo(Probe)', 'WebRTC'
 ];
 
 const FEATURE_ROWS = [
@@ -134,7 +143,7 @@ const FEATURE_ROWS = [
         statuses: [
             'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes',
             'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes',
-            'yes', 'yes', 'yes', 'yes', 'yes', 'yes'
+            'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes'
         ]
     },
     {
@@ -144,7 +153,7 @@ const FEATURE_ROWS = [
         statuses: [
             'no', 'yes', 'yes', 'unsure', 'no', 'no', 'yes', 'yes', 'no', 'no', 'no', 'yes', 'unsure',
             'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'no', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes',
-            'yes', 'yes', 'yes', 'yes', 'yes', 'yes'
+            'yes', 'yes', 'yes', 'yes', 'yes', 'yes', 'no'
         ]
     },
     {
@@ -153,7 +162,7 @@ const FEATURE_ROWS = [
         statuses: [
             'no', 'unsure', 'yes', 'unsure', 'no', 'no', 'no', 'yes', 'no', 'no', 'no', 'yes', 'unsure',
             'no', 'yes', 'no', 'no', 'no', 'no', 'no', 'no', 'no', 'unsure', 'unsure', 'unsure', 'no', 'no',
-            'unsure', 'yes', 'no', 'unsure', 'no', 'yes'
+            'unsure', 'yes', 'no', 'unsure', 'no', 'yes', 'no'
         ]
     }
 ];

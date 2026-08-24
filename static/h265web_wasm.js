@@ -8510,6 +8510,12 @@ var _ffdecoder_set_video_decoder_with_extra = Module["_ffdecoder_set_video_decod
 
 var _ffdecoder_set_audio_decoder = Module["_ffdecoder_set_audio_decoder"] = createExportWrapper("ffdecoder_set_audio_decoder", 2);
 
+var _webrtc_ffdecoder_set_video_decoder_with_extra = Module["_webrtc_ffdecoder_set_video_decoder_with_extra"] = createExportWrapper("webrtc_ffdecoder_set_video_decoder_with_extra", 6);
+
+var _webrtc_ffdecoder_set_audio_decoder = Module["_webrtc_ffdecoder_set_audio_decoder"] = createExportWrapper("webrtc_ffdecoder_set_audio_decoder", 2);
+
+var _webrtc_ffdecoder_flush_video = Module["_webrtc_ffdecoder_flush_video"] = createExportWrapper("webrtc_ffdecoder_flush_video", 1);
+
 var _ffdecoder_decode_video_frame = Module["_ffdecoder_decode_video_frame"] = createExportWrapper("ffdecoder_decode_video_frame", 6);
 
 var _ffdecoder_decode_audio_frame = Module["_ffdecoder_decode_audio_frame"] = createExportWrapper("ffdecoder_decode_audio_frame", 6);

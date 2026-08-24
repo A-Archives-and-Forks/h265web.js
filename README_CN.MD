@@ -20,7 +20,7 @@
 
 > **自 2017 年持续打磨至今，h265web.js PRO 已沉淀出成熟稳定的浏览器播放能力，兼具丰富特性与强劲性能表现。**
 >
-> 覆盖 HEVC/H.265、AVC/H.264、AV1，以及直播、点播、WebCodec、WASM、MediaInfo、截图、全屏、Seek、多实例等核心能力。
+> 覆盖 HEVC/H.265、AVC/H.264、AV1、WebRTC，以及直播、点播、WebCodec、WASM、MediaInfo、截图、全屏、Seek、多实例等核心能力。
 >
 > **推荐流媒体服务：** [ZLMediaKit](https://github.com/ZLMediaKit/ZLMediaKit)，适合和 h265web.js 搭配做直播与点播分发。
 
@@ -47,6 +47,8 @@
 ## 演示入口
 
 - 官网 Demo: https://h265web.com/player.php
+- WebRTC WHIP 推流演示: [webrtc-publish.html](./webrtc-publish.html)
+- WebRTC WHEP 拉流演示: [webrtc-play.html](./webrtc-play.html)
 - 文档（官网 How to use）: https://h265web.com/markdown-docs/zh/get-started.php
 - 文档（本地 How to use）: [README-HowToUse-CN.MD](./DOCS/README-HowToUse-CN.MD)
 
@@ -55,7 +57,7 @@
 
 - 浏览器播放 HEVC / H.265、AVC / H.264、AV1
 - 点播与直播统一接入
-- MP4 / MOV / MKV / FLV / MPEG-TS / M3U8 / HLS / HTTP-FLV / WS-FLV / HTTP-TS / WS-TS / HEVC ES 等协议验证
+- MP4 / MOV / MKV / FLV / MPEG-TS / M3U8 / HLS / HTTP-FLV / WS-FLV / HTTP-TS / WS-TS / WebRTC / HEVC ES 等协议验证
 - 需要截图、MediaInfo、倍速、Seek、全屏、多实例、多线程等能力的网页播放器项目
 
 ### 接入案例（部分）
@@ -97,6 +99,9 @@
 | <br> | <br> | <br> | <br> |
 | <img src="resource/icon-mediainfo.png" width="100"> | <img src="resource/icon-hevc-s.png" width="100"> | <img src="resource/icon-avc-s.png" width="100"> | <img src="resource/icon-hdecode.png" width="100"> |
 | MediaInfo | HEVC/H.265 | AVC/H.264 | Hardware decoder<br>硬解码<br>(FLV/HTTP-FLV/MP4) |
+| <br> | <br> | <br> | <br> |
+| <img src="resource/webrtc.png" width="100"> | <br> | <br> | <br> |
+| WebRTC（直播） | <br> | <br> | <br> |
 
 </font>
 </strong>
@@ -125,6 +130,9 @@
 | websocket-hevc | 直播 |  是  | ---- |
 | websocket-flv | 直播 |  是  | ---- |
 | websocket-ts | 直播 |  是  | ---- |
+| WebRTC / WHEP | 直播 | 是 | 标准 HTTP 信令入口，推荐用于拉流播放 |
+| webrtc:// | 直播 | 是 | SDK 兼容地址，内部转换为 WHEP 信令 |
+| ZLM WebRTC API | 直播 | 是 | ZLMediaKit 私有信令接口 |
 | HEVC/H.265 | 点播 |  是  | ---- |
 | HEVC/H.265 | 直播 |  是  | ---- |
 | AVC/H.264 | 点播 |  是  | ---- |
@@ -149,6 +157,9 @@
 | WebCodec | 是 | 浏览器硬解码优先路径 |
 | SIMD | 是 | WASM + SIMD 加速路径 |
 | MSE | 是 | 浏览器 MSE 播放路径 |
+| 原生 WebRTC | 是 | 支持 WHEP、`webrtc://` 兼容地址和 ZLM 私有信令 |
+| WebRTC 自动选链 | 是 | SDK 内识别 URL，也可通过 `core: 'webrtc'` 强制选择 |
+| WebRTC 单轨播放 | 是 | 支持音视频、仅视频和仅音频协商结果 |
 | 直播 | 是 |  ----  |
 | 点播 | 是 |  ----  |
 | Seek跳转 | 是 | ---- |
@@ -185,6 +196,80 @@
 | 获取SEI | 是 | ---- |
 
 <br>
+
+## WebRTC 推流与拉流
+
+WHIP 是标准 WebRTC HTTP 推流协议，WHEP 是标准 WebRTC HTTP 拉流协议。h265web.js 是播放器，因此推荐使用 WHEP 播放地址。HTTP(S) 地址负责 SDP 信令，协商后的媒体仍通过 WebRTC ICE/DTLS/SRTP 传输。
+
+- 浏览器 WHIP 推流演示：[webrtc-publish.html](./webrtc-publish.html)
+- h265web.js WHEP 拉流演示：[webrtc-play.html](./webrtc-play.html)
+
+ZLMediaKit 将 RTMP 转为 WebRTC 前，需要设置：
+
+```ini
+[protocol]
+modify_stamp=1
+paced_sender_ms=0
+```
+
+`modify_stamp=1` 使用 ZLMediaKit 接收数据时的系统时钟并做平滑处理。部分 H.264 + AAC RTMP 输入在 `modify_stamp=2` 下虽然仍以正常帧率解码，但 Chrome 原生 WebRTC 播放阶段会把时间轴异常的帧判定为过期帧并丢弃。
+
+下面是已经真实验证的 H.264 + AAC 推流命令。FFmpeg 将流推给 ZLMediaKit，再由 ZLMediaKit 提供 WHEP 拉流：
+
+```bash
+ffmpeg -hide_banner -stream_loop -1 -re \
+  -i /path/to/input.flv \
+  -vf scale=640:360,format=yuv420p \
+  -c:v libx264 -preset veryfast -tune zerolatency \
+  -profile:v baseline -level 3.1 -bf 0 \
+  -g 25 -keyint_min 25 -sc_threshold 0 \
+  -c:a aac -profile:a aac_low -ar 44100 -ac 2 -b:a 128k \
+  -f flv rtmp://127.0.0.1/live/test
+```
+
+播放器支持以下三种输入地址：
+
+```text
+http://127.0.0.1/index/api/whep?app=live&stream=test
+webrtc://127.0.0.1/live/test
+http://127.0.0.1/index/api/webrtc?app=live&stream=test&type=play
+```
+
+第一种是标准 WHEP 地址，推荐使用。`webrtc://` 是 SDK 兼容地址，内部转换为 WHEP。第三种是 ZLMediaKit 私有信令接口。
+
+```js
+const player = H265webjsPlayer();
+
+player.on_ready_show_done_callback = function () {
+  console.log('WebRTC 首帧就绪');
+};
+
+player.on_play_time = function (seconds) {
+  console.log('WebRTC 播放时间', seconds);
+};
+
+player.on_error_callback = function (error) {
+  console.error('WebRTC 播放错误', error);
+};
+
+player.build({
+  player_id: 'canvas111',
+  base_url: './static/',
+  wasm_js_uri: 'h265web_wasm.js',
+  wasm_wasm_uri: 'h265web_wasm.wasm',
+  ext_src_js_uri: 'extjs.js',
+  ext_wasm_js_uri: 'extwasm.js',
+  width: 640,
+  height: 360,
+  auto_play: false,
+  ignore_audio: false,
+  core: 'webrtc'
+});
+
+player.load_media('http://127.0.0.1/index/api/whep?app=live&stream=test');
+```
+
+不设置 `core` 时，SDK 会自动识别三种 WebRTC 地址。WebRTC 继续使用播放器原有生命周期和 callback 名称，不需要第二套公开 API。原生 WebRTC 直播固定 1x，不支持 Seek。标准 WebRTC 只能接收浏览器成功协商的编码；未协商编码的 WebCodecs/WASM 降级需要服务器实现可选的 `h265web-rtc-encoded/v1` 编码媒体传输协议。
 
 
 # 文档入口
@@ -229,6 +314,12 @@
 
 | 更新 | 内容 |
 | ---- | ---- |
+| 时间 | 2026/08/25 |
+| - | 0.新增原生 WebRTC 直播播放，支持标准 WHEP 信令、`webrtc://` 兼容地址和 ZLMediaKit 私有 WebRTC 接口 |
+| - | 1.新增 WebRTC URL 自动选链和显式 `core: 'webrtc'`，保持原有 `build()`、`load_media()` 调用方式不变 |
+| - | 2.支持音视频、仅视频和仅音频协商结果，并复用已有生命周期、错误 callback、Release/Rebuild 和多实例隔离 |
+| - | 3.新增 WHIP 推流与 WHEP 拉流演示，并完成 WHEP、MP4、HTTP-FLV、HTTP-TS 的真实 Chrome 回归 |
+| - | 4.补充 ZLMediaKit `modify_stamp=1` 前置要求，避免 RTMP 转 WebRTC 时音视频时间轴导致浏览器呈现丢帧 |
 | 时间 | 2026/08/10 |
 | - | 0.新增回调感知的 HLS 主线路由，覆盖 Native HLS、MSE、WebCodec 和 WASM；`auto`/`mainline` 不会进入 `past-core/ext*`，只有显式设置 `legacy` 才使用历史内核 |
 | - | 1.对齐 HLS、MP4、FLV、MPEG-TS 的回调契约，覆盖 SEI、NAL/帧/渲染、缓存、Seek、生命周期、GPU 和 A/V 同步回调 |
